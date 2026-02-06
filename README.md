@@ -15,17 +15,13 @@ Explore the live intelligence engine in three simple steps:
 
 ---
 
-## ⚙️ Technical Architecture:
+## ⚙️ Technical Architecture
 This project implements a robust, end-to-end data lifecycle designed for high-performance market analysis.
 
-1. **DataSynthesis & Ingestion:** Engineered a Python-based generation engine to simulate a high-cardinality dataset of 5,000+ job records, ensuring realistic attribute distribution for role types and seniority levels.
-2. **Fuzzy Search Intelligence:** Implemented advanced string-matching logic to provide "Synonym-Aware" search capabilities, allowing the system to accurately categorize diverse job titles into unified role families.
-3. **Vectorised Aggregation:** Leveraged the Pandas library for high-speed data manipulation, executing complex filtering and multi-dimensional aggregations (salary medians, remote-work ratios) in sub-second response times.
-4. **Reactive Visualization:** Developed a dynamic UI using Streamlit that utilizes state management to provide real-time updates to KPI cards and interactive Plotly charts based on user-defined parameters.
-
----
-
-## ---
+1. **Data Synthesis & Ingestion**: Engineered a Python-based generation engine to simulate a high-cardinality dataset of 5,000+ job records, ensuring realistic attribute distribution for role types and seniority levels.
+2. **Fuzzy Search Intelligence**: Implemented advanced string-matching logic to provide "Synonym-Aware" search capabilities, allowing the system to accurately categorize diverse job titles into unified role families.
+3. **Vectorized Aggregation**: Leveraged the **Pandas** library for high-speed data manipulation, executing complex filtering and multi-dimensional aggregations (salary medians, remote-work ratios) in sub-second response times.
+4. **Reactive Visualization**: Developed a dynamic UI using **Streamlit** that utilizes state management to provide real-time updates to KPI cards and interactive Plotly charts based on user-defined parameters.
 
 ---
 
