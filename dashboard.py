@@ -4,7 +4,8 @@ dashboard.py (Professional / Classy UI)
 - Synonym-aware search + soft matching
 - Recommended skills always computed
 - Enterprise-style layout: header bar, metric cards, tabs, styled sidebar, clean charts
-- Shareable URL query params + Download CSV
+- Shareable URL query params + Download CSV + Apply links
+- Hides Streamlit chrome (menu/deploy) for a polished public demo
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ import re
 from collections import Counter
 from datetime import datetime
 from typing import List, Tuple
-from urllib.parse import urlencode
+from urllib.parse import urlencode, quote_plus
 
 import altair as alt
 import pandas as pd
@@ -75,50 +76,87 @@ def inject_css() -> None:
     st.markdown(
         """
 <style>
+/* Background */
 .stApp {
   background: radial-gradient(1200px 600px at 30% 10%, rgba(99,102,241,0.18), transparent 55%),
               radial-gradient(1000px 550px at 70% 15%, rgba(16,185,129,0.12), transparent 60%),
               linear-gradient(180deg, #0b1220 0%, #060a14 100%);
   color: #e7eaf0;
 }
-.block-container { padding-top: 1.2rem; padding-bottom: 2.5rem; }
+
+/* Layout padding */
+.block-container { padding-top: 1.2rem; padding-bottom: 2.2rem; }
+
+/* Sidebar */
 section[data-testid="stSidebar"] {
   background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
   border-right: 1px solid rgba(255,255,255,0.06);
 }
+
+/* Hide Streamlit chrome (menu/deploy/footer) for a clean public demo */
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+header { visibility: hidden; }   /* hides Streamlit header area incl. Deploy + menu */
+
+/* Header bar (inside the app) */
 .headerbar {
   padding: 18px 18px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.03);
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap; /* IMPORTANT: prevents title from getting cut on refresh */
 }
-.brand { display: flex; flex-direction: column; gap: 2px; }
-.brand-title { font-size: 24px; font-weight: 700; letter-spacing: 0.2px; }
+
+.brand { display: flex; flex-direction: column; gap: 4px; min-width: 260px; }
+.brand-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  line-height: 1.15;
+  word-break: break-word;
+}
 .brand-subtitle { font-size: 13px; opacity: 0.78; }
+
 .badge {
-  font-size: 12px; padding: 6px 10px; border-radius: 999px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04); opacity: 0.92;
+  background: rgba(255,255,255,0.04);
+  opacity: 0.92;
 }
+
+/* Cards */
 .card {
-  padding: 16px 16px; border-radius: 18px;
+  padding: 16px 16px;
+  border-radius: 18px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
   box-shadow: 0 12px 30px rgba(0,0,0,0.35);
 }
 .card-title { font-size: 12px; opacity: 0.78; margin-bottom: 6px; }
 .card-value { font-size: 24px; font-weight: 800; }
-.card-hint { font-size: 12px; opacity: 0.72; margin-top: 4px; }
-.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.card-hint  { font-size: 12px; opacity: 0.72; margin-top: 4px; }
+
+/* Skill pills */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .pill {
-  font-size: 12px; padding: 6px 10px; border-radius: 999px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
   background: rgba(99,102,241,0.14);
   border: 1px solid rgba(99,102,241,0.25);
 }
+
+/* Dataframe border */
 div[data-testid="stDataFrame"] {
-  border-radius: 16px; overflow: hidden;
+  border-radius: 16px;
+  overflow: hidden;
   border: 1px solid rgba(255,255,255,0.08);
 }
 </style>
@@ -197,6 +235,11 @@ def recommended_skills_from_query(query: str) -> List[str]:
 def fmt_money(x: float) -> str:
     return f"${int(x):,}"
 
+def build_apply_link(title: str, company: str, location: str) -> str:
+    # For synthetic data: generate an "apply" link as a Google job search for that exact row
+    q = f'{title} {company} {location} job'
+    return f"https://www.google.com/search?q={quote_plus(q)}"
+
 @st.cache_data(show_spinner=False)
 def load_data(path: str) -> pd.DataFrame:
     if not os.path.exists(path):
@@ -216,9 +259,9 @@ inject_css()
 
 df = load_data(DATA_PATH)
 
-# Shareable links: safe compatibility
+# Shareable links: compatibility-safe
 try:
-    qp = st.query_params  # new streamlit
+    qp = st.query_params
     qp_query = qp.get("q", "")
     qp_role = qp.get("role", "All")
     qp_level = qp.get("level", "All")
@@ -227,7 +270,7 @@ try:
 except Exception:
     qp_query, qp_role, qp_level, qp_remote, qp_state = "", "All", "All", "All", "All"
 
-# Header
+# Header inside the app
 st.markdown(
     f"""
 <div class="headerbar">
@@ -300,7 +343,7 @@ if state_choice != "All":
 
 filtered = df.loc[mask].copy()
 
-# Write query params back (safe)
+# Write query params back (shareable)
 try:
     st.query_params.update({
         "q": query,
@@ -350,7 +393,6 @@ share_url = build_share_url(base_url, {
 })
 st.markdown('<div class="card">', unsafe_allow_html=True)
 st.subheader("Share this view")
-st.caption("Copy this link — it preserves your search + filters.")
 st.code(share_url, language="text")
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -361,7 +403,6 @@ tab1, tab2, tab3 = st.tabs(["Overview", "Skills Intel", "Job Results"])
 
 with tab1:
     st.subheader("Recommended skills for your search")
-    st.caption("Inferred from your query — works even if there are no exact title matches.")
     pills_html = "".join([f'<span class="pill">{s}</span>' for s in recommended])
     st.markdown(f'<div class="card"><div class="pills">{pills_html}</div></div>', unsafe_allow_html=True)
 
@@ -369,12 +410,8 @@ with tab1:
     left, right = st.columns([1.1, 1.0])
 
     with left:
-        st.subheader("Observed top skills (from matched jobs)")
-        if len(filtered) == 0:
-            st.info("No matching jobs for current filters. Showing global skills as fallback.")
-            skills_df = top_skills(df, k=topk)
-        else:
-            skills_df = top_skills(filtered, k=topk)
+        st.subheader("Observed top skills")
+        skills_df = top_skills(filtered if len(filtered) > 0 else df, k=topk)
 
         bar = (
             alt.Chart(skills_df)
@@ -432,12 +469,7 @@ with tab1:
 
 with tab2:
     st.subheader("Skills Intel")
-    st.caption("Validate what the market is asking for — by role and filters.")
-
     base_df = filtered if len(filtered) > 0 else df
-    if len(filtered) == 0:
-        st.warning("No matches. Try loosening filters or searching broader terms like 'engineer', 'data', 'software'.")
-
     skills_df = top_skills(base_df, k=topk)
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -453,21 +485,32 @@ with tab2:
 
 with tab3:
     st.subheader("Matched Job Results")
-    st.caption("This table updates live with your search and filters.")
 
     show_cols = [
         "job_id", "title", "role_family", "experience_level",
         "company", "location", "is_remote",
         "salary_min", "salary_max", "salary_mid",
         "posted_date", "skills",
+        "apply_link",
     ]
 
     out = filtered.copy()
+
+    # Build an "apply" link (Google job search) for each row
+    out["apply_link"] = out.apply(
+        lambda r: build_apply_link(
+            str(r.get("title", "")),
+            str(r.get("company", "")),
+            str(r.get("location", "")),
+        ),
+        axis=1,
+    )
+
     if "posted_date" in out.columns:
-        out["posted_date"] = out["posted_date"].dt.date.astype(str)
+        out["posted_date"] = pd.to_datetime(out["posted_date"], errors="coerce").dt.date.astype(str)
 
     if len(out) == 0:
-        st.info("No rows to display. Remove State/Role family filters or search 'engineer' to broaden results.")
+        st.info("No rows to display. Broaden filters or try a simpler query like 'engineer'.")
     else:
         out["salary_min"] = out["salary_min"].apply(lambda x: f"${int(x):,}")
         out["salary_max"] = out["salary_max"].apply(lambda x: f"${int(x):,}")
@@ -476,13 +519,22 @@ with tab3:
 
         csv_bytes = out[show_cols].to_csv(index=False).encode("utf-8")
         st.download_button(
-            label="Download matched jobs as CSV",
+            label="Download matched jobs (CSV)",
             data=csv_bytes,
             file_name="matched_jobs.csv",
             mime="text/csv",
         )
 
-        st.dataframe(out[show_cols], use_container_width=True, height=520)
-
-st.write("")
-st.caption("Tip: Try searches like “software developer”, “senior java”, “data engineer etl”, “cloud security”, “mlops”.")
+        # Use Streamlit's column config to render clickable links
+        st.dataframe(
+            out[show_cols],
+            use_container_width=True,
+            height=520,
+            column_config={
+                "apply_link": st.column_config.LinkColumn(
+                    "Apply / View",
+                    help="Opens a job search for this title + company",
+                    display_text="Open",
+                )
+            },
+        )
