@@ -7,31 +7,40 @@ Tech Skill Radar is a scalable data pipeline and interactive dashboard designed 
 
 ---
 
-## 🚀 Quick Start
-No installation required. You can access the live intelligence engine immediately:
-1. **Visit the Dashboard:** [tech-skill-radar.streamlit.app](https://tech-skill-radar.streamlit.app)
-2. **Search a Role:** Type any role (e.g., "Data Engineer" or "DevOps") into the sidebar.
-3. **Analyze:** Explore real-time skill rankings, median salaries, and direct application links.
+## ⚡ Live Exploration
+Explore the live intelligence engine in three simple steps:
+1. **Launch:** Open the [Tech Skill Radar](https://tech-skill-radar.streamlit.app).
+2. **Filter:** Enter any tech role (e.g., "Full Stack Developer").
+3. **Analyze:** Instantly view matched job counts, median salaries, and top skills.
 
 ---
 
-## 🛠️ How It Works (The Pipeline)
-This project follows a professional Data Engineering lifecycle:
+## ⚙️ Technical Architecture:
+This project implements a robust, end-to-end data lifecycle designed for high-performance market analysis.
 
-1. **Data Ingestion:** A Python-based engine processes 5,000+ synthetic job records with role-specific skill mapping.
-2. **Fuzzy Search Intelligence:** Uses advanced string matching to allow for flexible role discovery across various tech families.
-3. **Aggregation Engine:** Pandas-driven logic calculates real-time metrics for salary (Mid/Senior levels) and remote-work availability.
-4. **Interactive Visualization:** A custom Streamlit UI renders dynamic "Skill Intel" cards and application tracking tables.
+1. **DataSynthesis & Ingestion:** Engineered a Python-based generation engine to simulate a high-cardinality dataset of 5,000+ job records, ensuring realistic attribute distribution for role types and seniority levels.
+2. **Fuzzy Search Intelligence:** Implemented advanced string-matching logic to provide "Synonym-Aware" search capabilities, allowing the system to accurately categorize diverse job titles into unified role families.
+3. **Vectorised Aggregation:** Leveraged the Pandas library for high-speed data manipulation, executing complex filtering and multi-dimensional aggregations (salary medians, remote-work ratios) in sub-second response times.
+4. **Reactive Visualization:** Developed a dynamic UI using Streamlit that utilizes state management to provide real-time updates to KPI cards and interactive Plotly charts based on user-defined parameters.
+
+---
+
+## ---
 
 ---
 
-## 🧩 Architecture
-* **Language:** `Python 3.12`
-* **Data Core:** `Pandas` (High-performance filtering & aggregation)
-* **Interface:** `Streamlit` (Reactive UI components)
-* **Deployment:** `CI/CD` via GitHub & Streamlit Cloud
+## 🛠️ The Tech Stack
+This project is built on a modern data stack optimized for scalability and performance.
+
+| Layer | Technology | Role in Pipeline |
+| :--- | :--- | :--- |
+| **Language** | `Python 3.12` | Core logic and data processing engine |
+| **Data Engine** | `Pandas` | High-performance vectorized filtering & aggregation |
+| **Interface** | `Streamlit` | Reactive UI for real-time market visualization |
+| **Deployment** | `CI/CD` | Automated sync via GitHub & Streamlit Cloud |
 
 ---
+
 
 ## 💻 Local Development
 If you wish to contribute or run this pipeline locally:
