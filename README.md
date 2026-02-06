@@ -1,5 +1,5 @@
 # 🛰️ Tech Skill Radar
-**An enterprise-grade job market intelligence pipeline analyzing 5,000+ data signals.**
+**An enterprise-grade radar and intelligence pipeline analyzing 5,000+ job market signals.**
 
 [🚀 View Live Dashboard](https://tech-skill-radar.streamlit.app)
 
