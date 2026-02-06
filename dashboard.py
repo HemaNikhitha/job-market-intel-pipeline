@@ -4,8 +4,8 @@ dashboard.py (Professional / Classy UI)
 - Synonym-aware search + soft matching
 - Recommended skills always computed
 - Enterprise-style layout: header bar, metric cards, tabs, styled sidebar, clean charts
-- Shareable URL query params + Download CSV + Apply links
-- Hides Streamlit chrome (menu/deploy) for a polished public demo
+- Shareable URL query params + Download CSV + LinkedIn apply links
+- Hides Streamlit chrome (menu/deploy/footer) for a polished public demo
 """
 
 from __future__ import annotations
@@ -76,29 +76,23 @@ def inject_css() -> None:
     st.markdown(
         """
 <style>
-/* Background */
 .stApp {
   background: radial-gradient(1200px 600px at 30% 10%, rgba(99,102,241,0.18), transparent 55%),
               radial-gradient(1000px 550px at 70% 15%, rgba(16,185,129,0.12), transparent 60%),
               linear-gradient(180deg, #0b1220 0%, #060a14 100%);
   color: #e7eaf0;
 }
-
-/* Layout padding */
 .block-container { padding-top: 1.2rem; padding-bottom: 2.2rem; }
-
-/* Sidebar */
 section[data-testid="stSidebar"] {
   background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
   border-right: 1px solid rgba(255,255,255,0.06);
 }
 
-/* Hide Streamlit chrome (menu/deploy/footer) for a clean public demo */
+/* Hide Streamlit chrome for clean public demo */
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
-header { visibility: hidden; }   /* hides Streamlit header area incl. Deploy + menu */
+header { visibility: hidden; } /* hides deploy/menu area */
 
-/* Header bar (inside the app) */
 .headerbar {
   padding: 18px 18px;
   border: 1px solid rgba(255,255,255,0.08);
@@ -109,9 +103,8 @@ header { visibility: hidden; }   /* hides Streamlit header area incl. Deploy + m
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  flex-wrap: wrap; /* IMPORTANT: prevents title from getting cut on refresh */
+  flex-wrap: wrap; /* prevents title from cutting */
 }
-
 .brand { display: flex; flex-direction: column; gap: 4px; min-width: 260px; }
 .brand-title {
   font-size: 26px;
@@ -131,7 +124,6 @@ header { visibility: hidden; }   /* hides Streamlit header area incl. Deploy + m
   opacity: 0.92;
 }
 
-/* Cards */
 .card {
   padding: 16px 16px;
   border-radius: 18px;
@@ -143,7 +135,6 @@ header { visibility: hidden; }   /* hides Streamlit header area incl. Deploy + m
 .card-value { font-size: 24px; font-weight: 800; }
 .card-hint  { font-size: 12px; opacity: 0.72; margin-top: 4px; }
 
-/* Skill pills */
 .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .pill {
   font-size: 12px;
@@ -153,7 +144,6 @@ header { visibility: hidden; }   /* hides Streamlit header area incl. Deploy + m
   border: 1px solid rgba(99,102,241,0.25);
 }
 
-/* Dataframe border */
 div[data-testid="stDataFrame"] {
   border-radius: 16px;
   overflow: hidden;
@@ -235,10 +225,20 @@ def recommended_skills_from_query(query: str) -> List[str]:
 def fmt_money(x: float) -> str:
     return f"${int(x):,}"
 
-def build_apply_link(title: str, company: str, location: str) -> str:
-    # For synthetic data: generate an "apply" link as a Google job search for that exact row
-    q = f'{title} {company} {location} job'
-    return f"https://www.google.com/search?q={quote_plus(q)}"
+def build_linkedin_jobs_link(title: str, company: str, location: str) -> str:
+    """
+    LinkedIn Jobs search URL. Works well for demo + feels professional.
+    """
+    # LinkedIn search is forgiving; include title + company + location
+    keywords = f"{title} {company}".strip()
+    loc = (location or "").strip()
+
+    # This format is stable:
+    # https://www.linkedin.com/jobs/search/?keywords=...&location=...
+    return (
+        "https://www.linkedin.com/jobs/search/?"
+        + urlencode({"keywords": keywords, "location": loc})
+    )
 
 @st.cache_data(show_spinner=False)
 def load_data(path: str) -> pd.DataFrame:
@@ -270,7 +270,7 @@ try:
 except Exception:
     qp_query, qp_role, qp_level, qp_remote, qp_state = "", "All", "All", "All", "All"
 
-# Header inside the app
+# Header
 st.markdown(
     f"""
 <div class="headerbar">
@@ -496,9 +496,9 @@ with tab3:
 
     out = filtered.copy()
 
-    # Build an "apply" link (Google job search) for each row
+    # LinkedIn Jobs search link per row (professional)
     out["apply_link"] = out.apply(
-        lambda r: build_apply_link(
+        lambda r: build_linkedin_jobs_link(
             str(r.get("title", "")),
             str(r.get("company", "")),
             str(r.get("location", "")),
@@ -525,15 +525,14 @@ with tab3:
             mime="text/csv",
         )
 
-        # Use Streamlit's column config to render clickable links
         st.dataframe(
             out[show_cols],
             use_container_width=True,
             height=520,
             column_config={
                 "apply_link": st.column_config.LinkColumn(
-                    "Apply / View",
-                    help="Opens a job search for this title + company",
+                    "Apply / View on LinkedIn",
+                    help="Opens LinkedIn Jobs search for this title + company + location",
                     display_text="Open",
                 )
             },
