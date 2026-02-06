@@ -3,7 +3,7 @@
 dashboard.py (Professional / Classy UI)
 - Synonym-aware search + soft matching
 - Recommended skills always computed
-- Enterprise-style layout: header bar, metric cards, tabs, styled sidebar, clean charts
+- Enterprise layout: header bar, metric cards, tabs, styled sidebar, clean charts
 - Shareable URL query params + Download CSV + LinkedIn apply links
 - Hides Streamlit chrome (menu/deploy/footer) for a polished public demo
 """
@@ -15,13 +15,21 @@ import re
 from collections import Counter
 from datetime import datetime
 from typing import List, Tuple
-from urllib.parse import urlencode, quote_plus
+from urllib.parse import urlencode
 
 import altair as alt
 import pandas as pd
 import streamlit as st
 
 DATA_PATH = os.getenv("JOB_DATA_PATH", "data/raw/jobs.csv")
+
+US_STATES = [
+    "All",
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
+    "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM",
+    "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA",
+    "WV", "WI", "WY",
+]
 
 # -----------------------------
 # Recommended skills mapping
@@ -91,7 +99,7 @@ section[data-testid="stSidebar"] {
 /* Hide Streamlit chrome for clean public demo */
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
-header { visibility: hidden; } /* hides deploy/menu area */
+header { visibility: hidden; }
 
 .headerbar {
   padding: 18px 18px;
@@ -103,7 +111,7 @@ header { visibility: hidden; } /* hides deploy/menu area */
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  flex-wrap: wrap; /* prevents title from cutting */
+  flex-wrap: wrap;
 }
 .brand { display: flex; flex-direction: column; gap: 4px; min-width: 260px; }
 .brand-title {
@@ -226,19 +234,9 @@ def fmt_money(x: float) -> str:
     return f"${int(x):,}"
 
 def build_linkedin_jobs_link(title: str, company: str, location: str) -> str:
-    """
-    LinkedIn Jobs search URL. Works well for demo + feels professional.
-    """
-    # LinkedIn search is forgiving; include title + company + location
     keywords = f"{title} {company}".strip()
     loc = (location or "").strip()
-
-    # This format is stable:
-    # https://www.linkedin.com/jobs/search/?keywords=...&location=...
-    return (
-        "https://www.linkedin.com/jobs/search/?"
-        + urlencode({"keywords": keywords, "location": loc})
-    )
+    return "https://www.linkedin.com/jobs/search/?" + urlencode({"keywords": keywords, "location": loc})
 
 @st.cache_data(show_spinner=False)
 def load_data(path: str) -> pd.DataFrame:
@@ -259,7 +257,7 @@ inject_css()
 
 df = load_data(DATA_PATH)
 
-# Shareable links: compatibility-safe
+# Shareable links params (compatible with older Streamlit too)
 try:
     qp = st.query_params
     qp_query = qp.get("q", "")
@@ -316,11 +314,10 @@ with st.sidebar:
         index=remote_opts.index(qp_remote) if qp_remote in remote_opts else 0,
     )
 
-    states = ["All"] + sorted(df["state"].dropna().unique().tolist())
     state_choice = st.selectbox(
         "State",
-        states,
-        index=states.index(qp_state) if qp_state in states else 0,
+        US_STATES,
+        index=US_STATES.index(qp_state) if qp_state in US_STATES else 0,
     )
 
     st.divider()
@@ -382,7 +379,7 @@ with c4:
 
 st.write("")
 
-# Share link card
+# Share link (local for now)
 base_url = "http://localhost:8502"
 share_url = build_share_url(base_url, {
     "q": query,
@@ -496,7 +493,6 @@ with tab3:
 
     out = filtered.copy()
 
-    # LinkedIn Jobs search link per row (professional)
     out["apply_link"] = out.apply(
         lambda r: build_linkedin_jobs_link(
             str(r.get("title", "")),
