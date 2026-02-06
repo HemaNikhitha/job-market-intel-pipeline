@@ -41,7 +41,6 @@ This project is built on a modern data stack optimized for scalability and perfo
 
 ---
 
-
 ## 💻 Local Development
 If you wish to contribute or run this pipeline locally:
 
